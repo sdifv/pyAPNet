@@ -12,6 +12,6 @@ if __name__ == '__main__':
     #     jstr = json.dumps(packet)
     #
     #     print(json.loads(jstr).get("data"))
-
-    print(SolveStatus.SUCCESS.value)
+    line = '> you  are me'
+    print(line.split(" ", 1)[-1])
 

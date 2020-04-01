@@ -2,10 +2,8 @@ import os
 
 
 class PathHelper:
-    BFContainer = '/home/yuhao/workplace/batfish/containers/'
 
-    def __init__(self):
-        pass
+    BFContainer = '/home/yuhao/workplace/batfish/containers/'
 
     @staticmethod
     def get_snapshot_path(network_name, snapshot_name):
@@ -29,21 +27,23 @@ class PathHelper:
         raise IOError('snapshot has not been initialized')
 
     @staticmethod
-    def check_data_exist(config_json, topology, updates):
-        if os.path.isdir(config_json):
-            files = os.listdir(config_json)
-            if len(files) == 0:
-                raise RuntimeError('config_json files not exist')
+    def check_init_data(config_json, topology, updates):
+        return PathHelper.check_data_exist(config_json) \
+               & PathHelper.check_data_exist(topology) \
+               & PathHelper.check_data_exist(updates)
+
+    @staticmethod
+    def check_data_exist(path):
+        if os.path.exists(path):
+            if os.path.isdir(path):
+                files = os.listdir(path)
+                if len(files) == 0:
+                    raise RuntimeError('directory[ {} ] is empty'.format(path))
         else:
-            raise RuntimeError('config_json dir not exist')
-
-        if not os.path.isfile(topology):
-            raise RuntimeError('topology file not exist')
-
-        if not os.path.isfile(updates):
-            raise RuntimeError('init_fibs file not exist')
+            raise RuntimeError('directory or file[ {} ] is not exist'.format(path))
 
         return True
+
 
 
 

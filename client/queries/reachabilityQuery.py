@@ -1,7 +1,7 @@
-from client.queries.query import query
+from client.queries.query import Query
 
 
-class ReachabilityQuery(query):
+class ReachabilityQuery(Query):
     range = [
         'reachability',
         'detectLoops',
