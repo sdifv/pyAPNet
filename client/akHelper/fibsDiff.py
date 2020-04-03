@@ -34,8 +34,8 @@ class FibsDiff:
                         f.write(format_fib_entry('+', line, node))
                     else:
                         continue
-        updates = os.path.join(self.res_path, 'batch_updates')
-        return FibsDiffAnswer('get_update_rules', updates)
+        updates_path = os.path.join(self.res_path, 'batch_updates')
+        return FibsDiffAnswer('get_update_rules', updates_path)
 
 
 

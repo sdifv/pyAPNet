@@ -6,12 +6,12 @@ import traceback
 from client.akHelper.fibHelper import ip2decimalism, format_fib_entry
 from client.akHelper.jsonHelper import *
 from client.akHelper.pathHelper import PathHelper
-from client.answers.initiationAnswer import InitiationAnswer
+from client.answers.answer import Answer
 from client.queries.query import Query
 from client.akHelper.solveStatus import SolveStatus
 
 
-class InitiationQuery(Query):
+class BaseCheck(Query):
 
     def __init__(self, query_name, network_name, snapshot_name):
         Query.__init__(self, query_name)
@@ -21,11 +21,7 @@ class InitiationQuery(Query):
     def get_snapshot_path(self):
         network = self.network
         snapshot = self.snapshot
-        try:
-            return PathHelper.get_snapshot_path(network, snapshot)
-        except IOError as e:
-            traceback.print_exc()
-            sys.exit(-1)
+        return PathHelper.get_snapshot_path(network, snapshot)
 
     def send_input_data(self, config_json, topology, updates):
         config_files = os.listdir(config_json)
@@ -33,29 +29,29 @@ class InitiationQuery(Query):
             with open(os.path.join(config_json, file), mode='r') as f:
                 packet = {
                     'head': '/json/'+file,
-                    'data': f.read()
+                    'body': f.read()
                 }
 
-                data = warp_input('data', packet)
+                data = warp_input('data', 'input configs', packet)
                 print('send data: ' + packet.get('head'))
                 self.socket.sendall(data.encode('utf-8'))
 
         with open(topology, mode='r') as f:
             packet = {
                 'head': '/fw/topo.txt',
-                'data': f.read()
+                'body': f.read()
             }
 
-            data = warp_input('data', packet)
+            data = warp_input('data', 'input topology', packet)
             print('send data: ' + packet.get('head'))
             self.socket.sendall(data.encode('utf-8'))
 
         with open(updates, mode='r') as f:
             packet = {
                 'head': '/parsed/updates',
-                'data': f.read()
+                'body': f.read()
             }
-            data = warp_input('data', packet)
+            data = warp_input('data', 'input base rules', packet)
             print('send data: ' + packet.get('head'))
             self.socket.sendall(data.encode('utf-8'))
 
@@ -83,37 +79,39 @@ class InitiationQuery(Query):
 
     def resolve(self):
         metadata = self.get_snapshot_path()
-        APKeep_init = os.path.join(metadata, 'APKeep', 'init')
-        config_json = os.path.join(APKeep_init, 'parsedConfig')
-        topology = os.path.join(APKeep_init, 'layer1Topology.txt')
-        updates = os.path.join(APKeep_init, 'init_fibs')
+        init = os.path.join(metadata, 'APKeep', 'init')
+        config_json = os.path.join(init, 'parsedConfig')
+        topology = os.path.join(init, 'layer1Topology.txt')
+        updates = os.path.join(init, 'init_fibs')
 
         self.generate_init_fibs(metadata, updates)
 
-        if PathHelper.check_data_exist(config_json, topology, updates):
+        if PathHelper.check_init_data(config_json, topology, updates):
             self.set_status(SolveStatus.READY)
 
         if self.status == SolveStatus.READY:
             self.send_init_request()
-            resp4init_request = self.socket.recv(1024)
-            if resp4init_request.decode('utf-8') == 'received cmd: init_request':
-                self.set_status(SolveStatus.POST_QUERY)
+            resp_json = self.socket.recv(1024).decode('utf-8')
+            print(resp_json)
+            resp = json.loads(resp_json)
+            if resp.get('type') == 'aka' and resp.get('query') == 'init request':
+                self.set_status(SolveStatus.POST_DATA)
                 self.send_input_data(config_json, topology, updates)
 
-                resp4data = self.socket.recv(1024)
-
-                print(resp4data.decode('utf-8'))
-                # if resp4data.decode('utf-8') == 'init apkeep: success':
-                #     self.set_status(SolveStatus.SUCCESS)
-                #     # return InitiationAnswer(self.name, self.status)
-                #     print("success")
+                while True:
+                    resp_json = self.socket.recv(1024).decode('utf-8')
+                    print(resp_json)
+                    resp = json.loads(resp_json)
+                    if resp.get('type') == 'aka' and resp.get('query') == 'base check':
+                        break
+                    else:
+                        answer = Answer(resp.get('query'), resp.get('data'))
                 self.set_status(SolveStatus.END)
-                # else:
-                #     print(resp4data.decode('utf-8'))
-                #     raise RuntimeError('server fail to receive query data')
+                return answer
             else:
-                print(resp4init_request.decode('utf-8'))
-                raise RuntimeError('server fail to receive query')
+                raise RuntimeError('base check failed!')
+        else:
+            raise RuntimeError('initial data is not ready')
 
 
 

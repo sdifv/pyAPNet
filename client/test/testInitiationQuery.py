@@ -1,6 +1,6 @@
 import traceback
 
-from client.queries.initiationQuery import InitiationQuery
+from client.queries.baseCheck import InitiationQuery
 
 if __name__ == '__main__':
     query_name = 'init_apkeep'

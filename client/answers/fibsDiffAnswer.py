@@ -7,7 +7,7 @@ from client.akHelper.fibHelper import decimalism2ip
 class FibsDiffAnswer:
     def __init__(self, query, data):
         self.query = query
-        self.data = data
+        self.path = data
 
     def wrapper(self, mode):
         if mode == 'detail':
@@ -19,7 +19,7 @@ class FibsDiffAnswer:
         pass
 
     def general_answer(self):
-        if os.path.exists(self.data):
+        if os.path.exists(self.path):
             change = []
             action = []
             node = []
@@ -27,7 +27,7 @@ class FibsDiffAnswer:
             length = []
             interface = []
             priority = []
-            for line in open(self.data):
+            for line in open(self.path):
                 elements = line.split()
                 change.append(elements[0])
                 action.append(elements[1])
@@ -39,7 +39,7 @@ class FibsDiffAnswer:
             data = {"operator": change, "action": action, "node": node, "prefix": ip,
                     "mask_length": length, "interface": interface, "priority": priority}
             frame = pd.DataFrame(data, columns=["operator", "action", "node", "prefix",
-                                                "mask_length", "interface","priority"])
+                                                "mask_length", "interface", "priority"])
             return frame
         else:
             print("updates file is not existing!")

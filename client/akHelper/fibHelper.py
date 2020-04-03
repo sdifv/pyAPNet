@@ -22,6 +22,7 @@ def decimalism2ip(dec_value):
 
 
 def format_fib_entry(action, line, node):
+    line = line.strip()
     elements = line.strip().split()
     prefix = elements[0].split('/')
     ip = ip2decimalism(prefix[0])

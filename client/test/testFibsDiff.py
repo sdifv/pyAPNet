@@ -12,6 +12,7 @@ if __name__ == '__main__':
         if PathHelper.check_data_exist(base_path) & PathHelper.check_data_exist(ref_path):
             query = FibsDiff(base_path, ref_path)
             answer: FibsDiffAnswer = query.resolve()
+            print(answer.data)
             print(answer.wrapper('general'))
     except IOError:
         traceback.print_exc()

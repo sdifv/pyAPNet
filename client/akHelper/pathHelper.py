@@ -24,7 +24,7 @@ class PathHelper:
                 print('network has not been created')
         else:
             print('container has not been created')
-        raise IOError('snapshot has not been initialized')
+        raise RuntimeError('snapshot has not been initialized')
 
     @staticmethod
     def check_init_data(config_json, topology, updates):
