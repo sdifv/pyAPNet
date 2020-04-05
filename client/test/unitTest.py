@@ -1,17 +1,27 @@
 import json
-
+import pandas as pd
+from IPython.display import display, HTML
 from client.akHelper.solveStatus import SolveStatus
 
-if __name__ == '__main__':
-    # file_path = '/home/yuhao/下载/forwarding-change-validation/layer1_topology.txt'
-    #
-    # with open(file_path, mode='r') as f:
-    #     packet = {
-    #         'data': f.read()
-    #     }
-    #     jstr = json.dumps(packet)
-    #
-    #     print(json.loads(jstr).get("data"))
-    line = '{"query":"base check","type":"aka"}'
-    print(json.loads(line).get('type'))
 
+# def pretty_print(df):
+#     return display(HTML(df.to_html().replace("\\n", "<br>")))
+#
+#
+# if __name__ == '__main__':
+#
+#     line = {"query": ['send\ncmd'], "type": ["aka"]}
+#     print(pretty_print(pd.DataFrame(line)))
+
+def pretty_print(df):
+    return display(HTML(df.to_html().replace("\\n","<br>")))
+
+
+data = [
+       {'id': 1, 't': 'very long text\ntext line 2\ntext line 3'},
+       {'id': 2, 't': 'short text'}
+       ]
+df = pd.DataFrame(data)
+df.set_index('id', inplace=True)
+
+pretty_print(df)

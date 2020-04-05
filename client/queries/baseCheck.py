@@ -33,7 +33,7 @@ class BaseCheck(Query):
                 }
 
                 data = warp_input('data', 'input configs', packet)
-                print('send data: ' + packet.get('head'))
+                # print('send data: ' + packet.get('head'))
                 self.socket.sendall(data.encode('utf-8'))
 
         with open(topology, mode='r') as f:
@@ -43,7 +43,7 @@ class BaseCheck(Query):
             }
 
             data = warp_input('data', 'input topology', packet)
-            print('send data: ' + packet.get('head'))
+            # print('send data: ' + packet.get('head'))
             self.socket.sendall(data.encode('utf-8'))
 
         with open(updates, mode='r') as f:
@@ -52,16 +52,16 @@ class BaseCheck(Query):
                 'body': f.read()
             }
             data = warp_input('data', 'input base rules', packet)
-            print('send data: ' + packet.get('head'))
+            # print('send data: ' + packet.get('head'))
             self.socket.sendall(data.encode('utf-8'))
 
         data = warp_input('cmd', 'input_over')
-        print('send cmd: ' + data)
+        # print('send cmd: ' + data)
         self.socket.sendall(data.encode('utf-8'))
 
     def send_init_request(self):
         data = warp_input('cmd', 'init_request', self.network)
-        print('send cmd: ' + data)
+        # print('send cmd: ' + data)
         self.socket.sendall(data.encode('utf-8'))
 
     def generate_init_fibs(self, path, updates):
@@ -92,7 +92,7 @@ class BaseCheck(Query):
         if self.status == SolveStatus.READY:
             self.send_init_request()
             resp_json = self.socket.recv(1024).decode('utf-8')
-            print(resp_json)
+            # print(resp_json)
             resp = json.loads(resp_json)
             if resp.get('type') == 'aka' and resp.get('query') == 'init request':
                 self.set_status(SolveStatus.POST_DATA)
@@ -100,7 +100,7 @@ class BaseCheck(Query):
 
                 while True:
                     resp_json = self.socket.recv(1024).decode('utf-8')
-                    print(resp_json)
+                    # print(resp_json)
                     resp = json.loads(resp_json)
                     if resp.get('type') == 'aka' and resp.get('query') == 'base check':
                         break

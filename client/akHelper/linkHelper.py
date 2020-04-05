@@ -11,7 +11,7 @@ class linkHelper:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             s.connect(linkHelper.address)
-            print("pyAPKeep links to server: {}".format(s.getpeername()))
+            # print("pyAPKeep links to server: {}".format(s.getpeername()))
         except socket.error as msg:
             print(msg)
             sys.exit(1)

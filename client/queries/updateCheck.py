@@ -15,7 +15,7 @@ class UpdateCheck(Query):
 
     def send_update_request(self):
         data = warp_input('cmd', 'update_check')
-        print('send cmd: '+data)
+        # print('send cmd: '+data)
         self.socket.sendall(data.encode('utf-8'))
 
     def send_update_data(self, update_rules):
@@ -25,17 +25,17 @@ class UpdateCheck(Query):
                 'body': f.read()
             }
             data = warp_input('data', self.name, packet)
-            print('send data: '+packet.get('head'))
+            # print('send data: '+packet.get('head'))
             self.socket.sendall(data.encode('utf-8'))
 
         data = warp_input('cmd', 'update_over')
-        print('send cmd: '+data)
+        # print('send cmd: '+data)
         self.socket.sendall(data.encode('utf-8'))
 
     def resolve(self):
         self.send_update_request()
         resp_json = self.socket.recv(1024).decode('utf-8')
-        print(resp_json)
+        # print(resp_json)
         resp = json.loads(resp_json)
 
         if resp.get('type') == 'aka' and resp.get('query') == 'update check':
@@ -43,11 +43,14 @@ class UpdateCheck(Query):
             self.send_update_data(self.update_rules.path)
 
             while True:
-                resp = json.loads(self.socket.recv(4096).decode('utf-8'))
+                json_str = self.socket.recv(4096).decode('utf-8')
+                resp = json.loads(json_str)
+                # resp = json.loads(self.socket.recv(4096).decode('utf-8'))
                 if resp.get('type') == 'aka' and resp.get('query') == 'update check':
                     break
                 else:
                     answer = Answer(resp.get('query'), resp.get('data'))
+
             self.set_status(SolveStatus.END)
             return answer
         else:

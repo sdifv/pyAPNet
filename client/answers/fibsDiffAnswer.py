@@ -15,10 +15,10 @@ class FibsDiffAnswer:
         elif mode == 'general':
             return self.general_answer()
 
-    def detail_answer(self):
+    def detail(self):
         pass
 
-    def general_answer(self):
+    def general(self):
         if os.path.exists(self.path):
             change = []
             action = []
