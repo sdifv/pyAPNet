@@ -78,13 +78,13 @@ class BaseCheck(Query):
             sys.exit(-1)
 
     def resolve(self):
-        metadata = self.get_snapshot_path()
-        init = os.path.join(metadata, 'APKeep', 'init')
+        container = self.get_snapshot_path()
+        init = os.path.join(container, 'APKeep', 'init')
         config_json = os.path.join(init, 'parsedConfig')
         topology = os.path.join(init, 'layer1Topology.txt')
         updates = os.path.join(init, 'init_fibs')
 
-        self.generate_init_fibs(metadata, updates)
+        self.generate_init_fibs(container, updates)
 
         if PathHelper.check_init_data(config_json, topology, updates):
             self.set_status(SolveStatus.READY)
@@ -97,9 +97,10 @@ class BaseCheck(Query):
             if resp.get('type') == 'aka' and resp.get('query') == 'init request':
                 self.set_status(SolveStatus.POST_DATA)
                 self.send_input_data(config_json, topology, updates)
-
+                
+                answer = Answer(resp.get('query'), None)
                 while True:
-                    resp_json = self.socket.recv(1024).decode('utf-8')
+                    resp_json = self.socket.recv(4096).decode('utf-8')
                     # print(resp_json)
                     resp = json.loads(resp_json)
                     if resp.get('type') == 'aka' and resp.get('query') == 'base check':

@@ -31,7 +31,7 @@ class APKeep:
             query = BaseCheck(query_name, network, snapshot)
             # answer: loops{size,data},...
             answer = query.resolve()
-            answer.describe(-1)
+            answer.describe(0)
             return answer
         except RuntimeError:
             traceback.print_exc()
