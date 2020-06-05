@@ -92,7 +92,6 @@ class BaseCheck(Query):
         if self.status == SolveStatus.READY:
             self.send_init_request()
             resp_json = self.socket.recv(1024).decode('utf-8')
-            # print(resp_json)
             resp = json.loads(resp_json)
             if resp.get('type') == 'aka' and resp.get('query') == 'init request':
                 self.set_status(SolveStatus.POST_DATA)

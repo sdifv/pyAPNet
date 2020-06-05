@@ -44,6 +44,7 @@ class UpdateCheck(Query):
 
             while True:
                 json_str = self.socket.recv(4096).decode('utf-8')
+                # print(json_str)
                 resp = json.loads(json_str)
                 # resp = json.loads(self.socket.recv(4096).decode('utf-8'))
                 if resp.get('type') == 'aka' and resp.get('query') == 'update check':
