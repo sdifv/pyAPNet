@@ -3,14 +3,11 @@ import traceback
 
 from client.akHelper.fibsDiff import FibsDiff
 from client.akHelper.pathHelper import PathHelper
-from client.answers.fibsDiffAnswer import FibsDiffAnswer
-from client.answers.initiationAnswer import InitiationAnswer
-from client.answers.reachabilityAnswer import ReachabilityAnswer
 from client.queries.updateCheck import UpdateCheck
 from client.queries.baseCheck import BaseCheck
 
 
-class APKeep:
+class RealConfig:
 
     def __init__(self, network, snapshot):
         self.network = network
@@ -39,9 +36,11 @@ class APKeep:
 
     def update_check(self, new_snapshot):
         query_name = 'update check'
+        network = self.network
+        snapshot = new_snapshot
         try:
-            update_rules = self.get_update_rules(new_snapshot)
-            query = UpdateCheck(query_name, update_rules)
+            # update_rules = self.get_update_rules(new_snapshot)
+            query = UpdateCheck(query_name, network, snapshot)
             answer = query.resolve()
             answer.describe()
             return answer

@@ -3,6 +3,58 @@ import json
 import pandas as pd
 from IPython.display import display, HTML
 
+
+def flow_wrapper(flow):
+    return '<b>src ip</b>:{src_ip}</br>' \
+           '<b>dst ip</b>:{dst_ip}</br>' \
+           '<b>src port</b>:{src_port}</br>' \
+           '<b>dst port</b>:{dst_port}</br>' \
+           '<b>protocol</b>:{protocol}</br>'.format(src_ip=flow.get("src ip"),
+                                                    dst_ip=flow.get("dst ip"),
+                                                    src_port=flow.get("src port"),
+                                                    dst_port=flow.get("dst port"),
+                                                    protocol=flow.get("protocol"))
+
+
+def try_get(obj, attr):
+    if obj is None:
+        return None
+    else:
+        return obj.get(attr)
+
+
+def path_wrapper(paths):
+    paths_html = []
+    path_index = 1
+    for path in paths:
+        hops_html = ['<b>{path_seq}</b>'.format(path_seq=path_index)]
+        hop_index = 1
+        for hop in path:
+            fw = hop.get('fwRule')
+            in_acl = hop.get('inACL')
+            out_acl = hop.get('outACL')
+            hop_html = '<b>({hop_seq})</b>.{node}</br>RECEIVED({in_port})</br>' \
+                       'INACL({in_action}:{in_acl})</br>' \
+                       'FORWARDED(Routes:(Prefix:{prefix},Next Hop Interface:{nhit}))</br>' \
+                       'OUTACL({out_action}:{out_acl})</br>' \
+                       'TRANSMITTED({out_port})'.format(hop_seq=hop_index, node=hop.get('node'),
+                                                        in_port=hop.get('inPort'),
+                                                        in_action=try_get(in_acl, 'action'),
+                                                        in_acl=try_get(in_acl, 'acl name'),
+                                                        # prefix=fw.get('prefix'), nhit=fw.get('outinterface'),
+                                                        prefix='None', nhit='None',
+                                                        out_action=try_get(out_acl, 'action'),
+                                                        out_acl=try_get(out_acl, 'acl name'),
+                                                        out_port=hop.get('outPort'))
+            hops_html.append(hop_html)
+            hop_index = hop_index + 1
+        path_html = '</br>'.join(hops_html)
+        paths_html.append(path_html)
+        path_index = path_index + 1
+
+    return '</br>'.join(paths_html)
+
+
 class Answer:
     def __init__(self, query, data):
         self.query = query
@@ -11,18 +63,14 @@ class Answer:
     def loops(self):
         if self.data is not None:
             loops_res = self.data.get('loops')
-            aps_info = []
-            loop_path = []
-            loop_num = []
+            loops_flow = []
+            loops_path = []
+            loops_num = []
 
             for loop in loops_res:
-                # loop： aps\paths\num
-                aps = []
-                for k, v in loop.get('ap').items():
-                    aps.append(k + ' : ' + v)
-                aps_info.append('\n'.join(aps))
-                loop_path.append(self.path_wrapper(loop.get('path')))
-                loop_num.append(1)
+                loops_flow.append(flow_wrapper(loop.get('flow')))
+                loops_path.append(path_wrapper(loop.get('path')))
+                loops_num.append(1)
 
             data = {'aps_info': aps_info, 'loop_path': loop_path, 'loop_num': loop_num}
 
@@ -35,53 +83,33 @@ class Answer:
     # def blackhole(self):
     #     pass
 
-    def describe(self):
+    def differentialReachability(self):
         if self.data is not None:
-            loops_num = len(self.data.get('loops'))
+            diffs = self.data.get('reachability diff')
+            diff_flows = []
+            before_paths = []
+            after_paths = []
+
+            for diff in diffs:
+                diff_flows.append(flow_wrapper(diff.get('flow')))
+                before_paths.append(path_wrapper(diff.get('before')))
+                after_paths.append(path_wrapper(diff.get('after')))
+
+            data = {'flows': diff_flows, 'before paths': before_paths, 'after paths': after_paths}
+            frame = pd.DataFrame(data)
+            html = html = frame.style.set_properties(**{'text-align': 'left'})
+            return display((HTML)(html.render()))
         else:
-            loops_num = 0
+            return None
 
-        print('loops : {}'.format(loops_num))
+    def describe(self):
+        loops_num = 0
+        diffs_num = 0
+        if self.data is not None:
+            if self.data.get('loops') is not None:
+                loops_num = len(self.data.get('loops'))
 
-    def path_wrapper(self, loop_hops):
-        # src:
-        # [{'node': 'core2', 'inPort': 'default', 'outPort': 'GigabitEthernet2/0',
-        #   'fwRule': {'outinterface': 'GigabitEthernet2/0', 'prefix': '10.12.11.2/32'}},
-        #  {'node': 'spine2', 'inPort': 'GigabitEthernet0/0', 'outPort': 'GigabitEthernet2/0',
-        #   'fwRule': {'outinterface': 'GigabitEthernet2/0', 'prefix': '10.12.11.2/32'}},
-        #  {'node': 'leaf1', 'inPort': 'GigabitEthernet1/0', 'outPort': 'GigabitEthernet0/0',
-        #   'fwRule': {'outinterface': 'GigabitEthernet0/0', 'prefix': '10.12.11.2/32'}},
-        #  {'node': 'spine1', 'inPort': 'GigabitEthernet2/0', 'outPort': 'GigabitEthernet1/0',
-        #   'fwRule': {'outinterface': 'GigabitEthernet1/0', 'prefix': '10.12.11.0/24'}},
-        #  {'node': 'core2', 'inPort': 'GigabitEthernet3/0', 'outPort': 'GigabitEthernet2/0',
-        #   'fwRule': {'outinterface': 'GigabitEthernet2/0', 'prefix': '10.12.11.2/32'}}]
-        #
-        # dst:
-        # loop_path = '<b>border2</b>(GigabitEthernet1/0) </br> \
-        # <b>core2</b>(GigabitEthernet0/0, GigabitEthernet2/0) </br>\
-        # <b>spine2</b>(GigabitEthernet0/0, GigabitEthernet2/0) </br>\
-        # <b>ACL</b>(leaf1_RESTRICT_NETWORK_TRAFFIC_IN_GigabitEthernet1/0_in,inport) </br>\
-        # <b>ACL</b>(leaf1_RESTRICT_NETWORK_TRAFFIC_IN_GigabitEthernet1/0_in,permit) </br>\
-        # <b>leaf1</b>(GigabitEthernet1/0, GigabitEthernet0/0) <br>\
-        # <b>spine1</b>(GigabitEthernet2/0, GigabitEthernet0/0)</br>\
-        # <b>core1</b>(GigabitEthernet2/0, GigabitEthernet1/0)</br>\
-        # <b>border2</b>(GigabitEthernet2/0, GigabitEthernet1/0) </br>'
-        # data = {'aps_info': ['3599:10.12.11.2/32'], 'loop_path': [loop_path], 'loop_num': ['<b>1</b>']}
-        html_res = []
-        index = 1
-        for hop in loop_hops:
-            fw = hop.get('fwRule')
-            html_hop = '<b>{seq}</b>.{node}</br>RECEIVED({inport})</br>' \
-                       'FORWARDED(Routes:(Prefix:{prefix},Next Hop Interface:{nhit}))</br>' \
-                       'TRANSMITTED({outport})</br>'.format(seq=index, node=hop.get('node'),
-                                                            inport=hop.get('inPort'),
-                                                            prefix=fw.get('prefix'), nhit=fw.get('outinterface'),
-                                                            outport=hop.get('outPort'))
-            html_res.append(html_hop)
-            index = index + 1
+            if self.data.get('reachability diff') is not None:
+                diffs_num = len(self.data.get('reachability diff'))
 
-        res = '</br>'.join(html_res)
-
-        return res
-
-
+        print('loops : {loops}, differentialReachability : {diffs}'.format(loops=loops_num, diffs=diffs_num))

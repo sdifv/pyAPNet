@@ -27,10 +27,11 @@ class PathHelper:
         raise RuntimeError('snapshot has not been initialized')
 
     @staticmethod
-    def check_init_data(config_json, topology, updates):
+    def check_init_data(config_json, topology, fwRules, edgePorts):
         return PathHelper.check_data_exist(config_json) \
                & PathHelper.check_data_exist(topology) \
-               & PathHelper.check_data_exist(updates)
+               & PathHelper.check_data_exist(fwRules) \
+               & PathHelper.check_data_exist(edgePorts)
 
     @staticmethod
     def check_data_exist(path):
